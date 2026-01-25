@@ -1,0 +1,94 @@
+- set:
+    interface:
+      eth0:
+        ip:
+          address:
+            dhcp: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.10.102/32: {}
+        type: loopback
+      swp1:
+        type: swp
+      swp2:
+        type: swp
+      swp3:
+        type: swp
+      swp4:
+        type: swp
+      swp5:
+        type: swp
+      swp6:
+        type: swp
+    router:
+      bgp:
+        autonomous-system: 65199
+        enable: on
+        router-id: 10.10.10.102
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      hostname: spine-2
+      timezone: Europe/Paris
+      message:
+        pre-login: |
+          #####################################################################################
+          #  Welcome to NVIDIA Cumulus VX (TM)
+          #####################################################################################
+
+        post-login: |
+          #####################################################################################
+          #  You are successfully logged in to: spine-2
+          #####################################################################################
+      global:
+        system-mac: 44:38:39:22:01:92
+    vrf:
+      default:
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  connected:
+                    enable: on
+              l2vpn-evpn:
+                enable: on
+            enable: on
+            neighbor:
+              swp1:
+                peer-group: underlay
+                type: unnumbered
+              swp2:
+                peer-group: underlay
+                type: unnumbered
+              swp3:
+                peer-group: underlay
+                type: unnumbered
+              swp4:
+                peer-group: underlay
+                type: unnumbered
+              swp5:
+                peer-group: underlay
+                type: unnumbered
+              swp6:
+                peer-group: underlay
+                type: unnumbered
+            path-selection:
+              multipath:
+                aspath-ignore: on
+            peer-group:
+              underlay:
+                address-family:
+                  l2vpn-evpn:
+                    enable: on
+                remote-as: external

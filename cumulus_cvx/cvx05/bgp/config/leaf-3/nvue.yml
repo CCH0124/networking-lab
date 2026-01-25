@@ -1,0 +1,170 @@
+
+- set:
+    bridge:
+      domain:
+        br_default:
+          untagged: 1
+          vlan:
+            40,50,60: {}
+    interface:
+      bond1:
+        bond:
+          member:
+            swp1: {}
+          mlag:
+            enable: on
+            id: 1
+        bridge:
+          domain:
+            br_default: {}
+        type: bond
+      bond2:
+        bond:
+          member:
+            swp2: {}
+          mlag:
+            enable: on
+            id: 2
+        bridge:
+          domain:
+            br_default: {}
+        type: bond
+      bond3:
+        bond:
+          member:
+            swp3: {}
+          mlag:
+            enable: on
+            id: 3
+        bridge:
+          domain:
+            br_default: {}
+        type: bond
+      eth0:
+        ip:
+          address:
+            dhcp: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.10.3/32: {}
+        type: loopback
+      peerlink:
+        bond:
+          member:
+            swp49: {}
+            swp50: {}
+        type: peerlink
+      peerlink.4094:
+        base-interface: peerlink
+        type: sub
+        vlan: 4094
+      swp1:
+        type: swp
+      swp2:
+        type: swp
+      swp3:
+        type: swp
+      swp49:
+        type: swp
+      swp50:
+        type: swp
+      swp51:
+        type: swp
+      swp52:
+        type: swp
+      vlan40:
+        ip:
+          address:
+            10.1.40.4/24: {}
+        type: svi
+        vlan: 40
+      vlan50:
+        ip:
+          address:
+            10.1.50.4/24: {}
+        type: svi
+        vlan: 50
+      vlan60:
+        ip:
+          address:
+            10.1.60.4/24: {}
+        type: svi
+        vlan: 60
+    mlag:
+      backup:
+        10.10.10.4: {}
+      enable: on
+      mac-address: 44:38:39:BE:EF:AA
+      peer-ip: linklocal
+    router:
+      bgp:
+        autonomous-system: 65103
+        enable: on
+        router-id: 10.10.10.3
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      aaa:
+        class:
+          nvapply:
+            action: allow
+            command-path:
+              /:
+                permission: all
+          nvshow:
+            action: allow
+            command-path:
+              /:
+                permission: ro
+          sudo:
+            action: allow
+            command-path:
+              /:
+                permission: all
+      global:
+        system-mac: 44:38:39:22:01:84
+      hostname: leaf03
+      reboot:
+        mode: cold
+      ssh-server:
+        state: enabled
+      wjh:
+        channel:
+          forwarding:
+            trigger:
+              l2: {}
+              l3: {}
+              tunnel: {}
+        enable: on
+    vrf:
+      default:
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                network:
+                  10.10.10.3/32: {}
+                redistribute:
+                  connected:
+                    enable: on
+            enable: on
+            neighbor:
+              peerlink.4094:
+                remote-as: external
+                type: unnumbered
+              swp51:
+                remote-as: external
+                type: unnumbered
+              swp52:
+                remote-as: external
+                type: unnumbered

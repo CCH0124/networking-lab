@@ -1,0 +1,64 @@
+name: bridge-poc
+
+topology:
+  nodes:
+    # spines
+    spine01:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/spine-1/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.3
+
+    spine02:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/spine-2/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.3
+
+    server01:
+      kind: linux
+      image: networkop/host:ifreload
+      # image: host_updated:ifreload
+      binds:
+      - config/server01/etc/network/interfaces:/etc/network/interfaces
+   
+    server02:
+      kind: linux
+      image: networkop/host:ifreload
+      binds:
+      - config/server02/etc/network/interfaces:/etc/network/interfaces
+
+    server03:
+      kind: linux
+      image: networkop/host:ifreload
+      binds:
+      - config/server03/etc/network/interfaces:/etc/network/interfaces
+   
+    server04:
+      kind: linux
+      image: networkop/host:ifreload
+      binds:
+      - config/server04/etc/network/interfaces:/etc/network/interfaces
+
+  links:
+    # peerlinks
+
+
+    - endpoints: [ "spine01:swp1", "spine02:swp1" ]
+
+    - endpoints: [ "spine01:swp3", "server01:eth1" ]
+    - endpoints: [ "spine02:swp3", "server02:eth1" ]
+    - endpoints: [ "spine01:swp4", "server03:eth1" ]
+    - endpoints: [ "spine02:swp4", "server04:eth1" ]

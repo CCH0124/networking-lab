@@ -1,0 +1,239 @@
+- set:
+    bridge:
+      domain:
+        br_default:
+          vlan:
+            '10':
+              vni:
+                '10': {}
+            '20':
+              vni:
+                '20': {}
+            '30':
+              vni:
+                '30': {}
+    evpn:
+      enable: on
+    interface:
+      bond1:
+        bond:
+          lacp-bypass: on
+          member:
+            swp1: {}
+          mlag:
+            enable: on
+            id: 1
+        bridge:
+          domain:
+            br_default:
+              access: 10
+        link:
+          mtu: 9000
+        type: bond
+      bond2:
+        bond:
+          lacp-bypass: on
+          member:
+            swp2: {}
+          mlag:
+            enable: on
+            id: 2
+        bridge:
+          domain:
+            br_default:
+              access: 20
+        link:
+          mtu: 9000
+        type: bond
+      bond3:
+        bond:
+          lacp-bypass: on
+          member:
+            swp3: {}
+          mlag:
+            enable: on
+            id: 3
+        bridge:
+          domain:
+            br_default:
+              access: 30
+        link:
+          mtu: 9000
+        type: bond
+      eth0:
+        ip:
+          address:
+            dhcp: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.10.3/32: {}
+        type: loopback
+      peerlink:
+        bond:
+          member:
+            swp49: {}
+            swp50: {}
+        type: peerlink
+      peerlink.4094:
+        base-interface: peerlink
+        type: sub
+        vlan: 4094
+      swp1:
+        type: swp
+      swp2:
+        type: swp
+      swp3:
+        type: swp
+      swp49:
+        type: swp
+      swp50:
+        type: swp
+      swp51:
+        type: swp
+      swp52:
+        type: swp
+      vlan10:
+        ip:
+          address:
+            10.1.10.4/24: {}
+          vrf: RED
+          vrr:
+            address:
+              10.1.10.1/24: {}
+            enable: on
+            state:
+              up: {}
+        type: svi
+        vlan: 10
+      vlan20:
+        ip:
+          address:
+            10.1.20.4/24: {}
+          vrf: RED
+          vrr:
+            address:
+              10.1.20.1/24: {}
+            enable: on
+            state:
+              up: {}
+        type: svi
+        vlan: 20
+      vlan30:
+        ip:
+          address:
+            10.1.30.4/24: {}
+          vrf: BLUE
+          vrr:
+            address:
+              10.1.30.1/24: {}
+            enable: on
+            state:
+              up: {}
+        type: svi
+        vlan: 30
+    mlag:
+      backup:
+        10.10.10.4: {}
+      enable: on
+      init-delay: 10
+      peer-ip: linklocal
+      priority: 1000
+    nve:
+      vxlan:
+        arp-nd-suppress: on
+        enable: on
+        mlag:
+          shared-address: 10.0.1.34
+        source:
+          address: 10.10.10.3
+    router:
+      bgp:
+        autonomous-system: 65103
+        enable: on
+        router-id: 10.10.10.3
+      vrr:
+        enable: on
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      global:
+        anycast-mac: 44:38:39:FF:00:BB
+        fabric-mac: 00:00:5E:00:01:01
+        system-mac: 44:38:39:22:01:84
+      hostname: leaf03
+    vrf:
+      BLUE:
+        evpn:
+          enable: on
+          vni:
+            '4002': {}
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  connected:
+                    enable: on
+                route-export:
+                  to-evpn:
+                    enable: on
+            autonomous-system: 65103
+            enable: on
+            router-id: 10.10.10.3
+      RED:
+        evpn:
+          enable: on
+          vni:
+            '4001': {}
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  connected:
+                    enable: on
+                route-export:
+                  to-evpn:
+                    enable: on
+            autonomous-system: 65103
+            enable: on
+            router-id: 10.10.10.3
+      default:
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  connected:
+                    enable: on
+              l2vpn-evpn:
+                enable: on
+            enable: on
+            neighbor:
+              peerlink.4094:
+                peer-group: underlay
+                type: unnumbered
+              swp51:
+                peer-group: underlay
+                type: unnumbered
+              swp52:
+                peer-group: underlay
+                type: unnumbered
+            peer-group:
+              underlay:
+                address-family:
+                  l2vpn-evpn:
+                    enable: on
+                remote-as: external

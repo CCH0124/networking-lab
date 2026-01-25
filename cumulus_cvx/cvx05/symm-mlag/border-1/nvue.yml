@@ -1,0 +1,215 @@
+- set:
+    bridge:
+      domain:
+        br_default:
+          vlan:
+            101-102: {}
+    evpn:
+      enable: on
+    interface:
+      bond3:
+        bond:
+          lacp-bypass: on
+          member:
+            swp3: {}
+          mlag:
+            enable: on
+            id: 1
+        bridge:
+          domain:
+            br_default:
+              vlan:
+                101-102: {}
+        link:
+          mtu: 9000
+        type: bond
+      eth0:
+        ip:
+          address:
+            dhcp: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.10.63/32: {}
+        type: loopback
+      peerlink:
+        bond:
+          member:
+            swp49: {}
+            swp50: {}
+        type: peerlink
+      peerlink.4094:
+        base-interface: peerlink
+        type: sub
+        vlan: 4094
+      swp3:
+        type: swp
+      swp49:
+        type: swp
+      swp50:
+        type: swp
+      swp51:
+        type: swp
+      swp52:
+        type: swp
+      vlan101:
+        ip:
+          address:
+            10.1.101.64/24: {}
+          vrf: RED
+          vrr:
+            address:
+              10.1.101.1/24: {}
+            enable: on
+            mac-address: 00:00:00:00:00:01
+            state:
+              up: {}
+        type: svi
+        vlan: 101
+      vlan102:
+        ip:
+          address:
+            10.1.102.64/24: {}
+          vrf: BLUE
+          vrr:
+            address:
+              10.1.102.1/24: {}
+            enable: on
+            mac-address: 00:00:00:00:00:02
+            state:
+              up: {}
+        type: svi
+        vlan: 102
+    mlag:
+      backup:
+        10.10.10.64: {}
+      enable: on
+      init-delay: 10
+      mac-address: 44:38:39:FF:00:FF
+      peer-ip: linklocal
+      priority: 1000
+    nve:
+      vxlan:
+        arp-nd-suppress: on
+        enable: on
+        mlag:
+          shared-address: 10.0.1.255
+        source:
+          address: 10.10.10.63
+    router:
+      bgp:
+        autonomous-system: 65253
+        enable: on
+        router-id: 10.10.10.63
+      vrr:
+        enable: on
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      hostname: border-1
+      timezone: Asia/Taipei
+      message:
+        pre-login: |
+          #####################################################################################
+          #  Welcome to NVIDIA Cumulus VX (TM)
+          #####################################################################################
+
+        post-login: |
+          #####################################################################################
+          #  You are successfully logged in to: border-1
+          #####################################################################################
+      global:
+        anycast-mac: 44:38:39:FF:00:FF
+        system-mac: 44:38:39:22:01:74
+    vrf:
+      BLUE:
+        evpn:
+          enable: on
+          vni:
+            '4002': {}
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  static:
+                    enable: on
+                route-export:
+                  to-evpn:
+                    enable: on
+            autonomous-system: 65253
+            enable: on
+            router-id: 10.10.10.63
+          static:
+            10.1.10.0/24:
+              address-family: ipv4-unicast
+              via:
+                10.1.102.4:
+                  type: ipv4-address
+            10.1.20.0/24:
+              address-family: ipv4-unicast
+              via:
+                10.1.102.4:
+                  type: ipv4-address
+      RED:
+        evpn:
+          enable: on
+          vni:
+            '4001': {}
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  static:
+                    enable: on
+                route-export:
+                  to-evpn:
+                    enable: on
+            autonomous-system: 65253
+            enable: on
+            router-id: 10.10.10.63
+          static:
+            10.1.30.0/24:
+              address-family: ipv4-unicast
+              via:
+                10.1.101.4:
+                  type: ipv4-address
+      default:
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                redistribute:
+                  connected:
+                    enable: on
+              l2vpn-evpn:
+                enable: on
+            enable: on
+            neighbor:
+              peerlink.4094:
+                peer-group: underlay
+                type: unnumbered
+              swp51:
+                peer-group: underlay
+                type: unnumbered
+              swp52:
+                peer-group: underlay
+                type: unnumbered
+            peer-group:
+              underlay:
+                address-family:
+                  l2vpn-evpn:
+                    enable: on
+                remote-as: external

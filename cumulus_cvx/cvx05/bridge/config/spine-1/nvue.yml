@@ -1,0 +1,59 @@
+- set:
+    bridge:
+      domain:
+        br_default:
+          vlan:
+            '10': {}
+            '20': {}
+    interface:
+      eth0:
+        ip:
+          address:
+            dhcp: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.10.101/32: {}
+        type: loopback
+      swp1:
+        type: swp
+        bridge:
+          domain:
+            br_default: {}
+      swp2:
+        type: swp
+      swp3:
+        type: swp
+        bridge:
+          domain:
+            br_default:
+              access: 10
+      swp4:
+        type: swp
+        bridge:
+          domain:
+            br_default:
+              access: 30
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      hostname: spine-1
+      timezone: Asia/Taipei
+      message:
+        pre-login: |
+          #####################################################################################
+          #  Welcome to NVIDIA Cumulus VX (TM)
+          #####################################################################################
+
+        post-login: |
+          #####################################################################################
+          #  You are successfully logged in to: spine-1
+          #####################################################################################

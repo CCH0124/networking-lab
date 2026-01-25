@@ -1,0 +1,13 @@
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The OOB network interface
+auto eth0
+iface eth0 inet dhcp
+
+# The data plane network interfaces
+auto eth1
+iface eth1 inet static
+  address 10.1.30.104
+  netmask 255.255.255.0

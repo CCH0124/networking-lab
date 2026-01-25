@@ -1,0 +1,119 @@
+name: vxlan-poc
+
+topology:
+  nodes:
+    # spines
+    spine01:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        # - config/spine-1/interfaces:/etc/network/interfaces.d/host-mounts
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/spine-1/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.3
+
+    spine02:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        #- config/spine-2/interfaces:/etc/network/interfaces.d/host-mounts
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/spine-2/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.3
+
+    # leaf
+    leaf01:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        #- config/leaf-1/interfaces:/etc/network/interfaces.d/host-mounts
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/leaf-1/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.5
+
+    leaf02:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        #- config/leaf-2/interfaces:/etc/network/interfaces.d/host-mounts
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/leaf-2/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.5
+
+    leaf03:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        #- config/leaf-3/interfaces:/etc/network/interfaces.d/host-mounts
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/leaf-3/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.5
+
+    leaf04:
+      kind: cumulus_cvx
+      image: cx_ebtables:5.3.0
+      runtime: docker
+      binds:
+        - /lib/modules:/lib/modules:ro # for kernel modules like ebtables
+        #- config/leaf-4/interfaces:/etc/network/interfaces.d/host-mounts
+        - config/01-common/entrypoint.sh:/root/entrypoint.sh
+        - config/01-common/apply-nvue.sh:/root/apply-nvue.sh
+        - config/leaf-4/nvue.yml:/home/cumulus/nvue.yml
+      entrypoint: /root/entrypoint.sh
+      cpu: 0.5
+
+    server01:
+      kind: linux
+      image: networkop/host:ifreload
+      # image: host_updated:ifreload
+      binds:
+      - config/server01/etc/network/interfaces:/etc/network/interfaces
+   
+    server03:
+      kind: linux
+      image: networkop/host:ifreload
+      binds:
+      - config/server03/etc/network/interfaces:/etc/network/interfaces
+
+  links:
+    # peerlinks
+
+
+    - endpoints: [ "spine01:swp1", "leaf01:swp51" ]
+    - endpoints: [ "spine02:swp1", "leaf01:swp52" ]
+
+    - endpoints: [ "spine01:swp2", "leaf02:swp51" ]
+    - endpoints: [ "spine02:swp2", "leaf02:swp52" ]
+
+    - endpoints: [ "spine01:swp3", "leaf03:swp51" ]
+    - endpoints: [ "spine02:swp3", "leaf03:swp52" ]
+
+    - endpoints: [ "spine01:swp4", "leaf04:swp51" ]
+    - endpoints: [ "spine02:swp4", "leaf04:swp52" ]
+
+
+    - endpoints: [ "server01:eth1", "leaf01:swp1" ]
+    - endpoints: [ "server01:eth2", "leaf02:swp1" ]
+
+    - endpoints: [ "server03:eth1", "leaf03:swp1" ]
+    - endpoints: [ "server03:eth2", "leaf04:swp1" ]

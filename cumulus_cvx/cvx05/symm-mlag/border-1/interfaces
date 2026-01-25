@@ -1,0 +1,91 @@
+auto lo
+iface lo inet loopback
+    address 10.10.10.63/32
+    clagd-vxlan-anycast-ip 10.0.1.255
+    vxlan-local-tunnelip 10.10.10.63
+auto mgmt
+iface mgmt
+    address 127.0.0.1/8
+    address ::1/128
+    vrf-table auto
+auto RED
+iface RED
+    vrf-table auto
+auto BLUE
+iface BLUE
+    vrf-table auto
+auto eth0
+iface eth0 inet dhcp
+    ip-forward off
+    ip6-forward off
+    vrf mgmt
+auto swp3
+iface swp3
+auto swp49
+iface swp49
+auto swp50
+iface swp50
+auto swp51
+iface swp51
+auto swp52
+iface swp52
+auto bond3
+iface bond3
+    mtu 9000
+    bond-slaves swp3
+    bond-mode 802.3ad
+    bond-lacp-bypass-allow yes
+    clag-id 1
+    bridge-vids 101 102
+auto peerlink
+iface peerlink
+    bond-slaves swp49 swp50
+    bond-mode 802.3ad
+    bond-lacp-bypass-allow no
+auto peerlink.4094
+iface peerlink.4094
+    clagd-peer-ip linklocal
+    clagd-priority 1000
+    clagd-backup-ip 10.10.10.64
+    clagd-sys-mac 44:38:39:FF:00:FF
+    clagd-args --initDelay 10
+auto vlan101
+iface vlan101
+    address 10.1.101.64/24
+    address-virtual 00:00:5E:00:01:01 10.1.101.1/24
+    hwaddress 44:38:39:22:01:ab
+    vrf RED
+    vlan-raw-device br_default
+    vlan-id 101
+auto vlan102
+iface vlan102
+    address 10.1.102.64/24
+    address-virtual 00:00:5E:00:01:01 10.1.102.1/24
+    hwaddress 44:38:39:22:01:ab
+    vrf BLUE
+    vlan-raw-device br_default
+    vlan-id 102
+auto vlan4024_l3
+iface vlan4024_l3
+    vrf RED
+    vlan-raw-device br_default
+    address-virtual 44:38:39:FF:00:FF
+    vlan-id 4024
+auto vlan4036_l3
+iface vlan4036_l3
+    vrf BLUE
+    vlan-raw-device br_default
+    address-virtual 44:38:39:FF:00:FF
+    vlan-id 4036
+auto vxlan48
+iface vxlan48
+    bridge-vlan-vni-map 4024=4001 4036=4002
+    bridge-vids 4024 4036
+    bridge-learning off
+auto br_default
+iface br_default
+    bridge-ports bond3 peerlink vxlan48
+    hwaddress 44:38:39:22:01:ab
+    bridge-vlan-aware yes
+    bridge-vids 101 102
+    bridge-pvid 1
