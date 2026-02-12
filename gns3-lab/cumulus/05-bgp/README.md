@@ -641,3 +641,54 @@ leaf02
     2 packets transmitted, 2 received, 0% packet loss, time 1003ms
     rtt min/avg/max/mdev = 1.155/1.324/1.493/0.169 ms
     ```
+
+#### 封包觀察
+
+
+1. 自治系統 (Autonomous System, AS)
+
+    AS 是由單一管理實體控制的網路集合，擁有獨立的路由策略。
+
+    * BGP 支援 16 位元和 32 位元 AS 編號。
+    * **BGP 路由資訊**：交換的路由資訊包含目的地的路由前綴 (route prefix)、到達該目的地的自治系統路徑 (**AS path**)，以及多種額外的路徑屬性 (path attributes, PAs)。
+
+    > ASN 64,512 到 65,534 是 16 位元 ASN 範圍內的私有 ASN，而 4,200,000,000 到 4,294,967,294 是擴展 32 位元範圍內的私有 ASN。
+
+2. BGP 傳輸層與會話建立
+
+    BGP 使用 **TCP 協議 (Port 179)** 作為可靠的傳輸協議，在 BGP 路由器（或稱為 BGP speakers）之間建立 TCP 連線會話。
+
+    * **無自動發現機制**：BGP 鄰居關係必須透過手動配置來定義。
+    * **路由交換**：當 TCP 連線建立後，BGP 對等體會先交換完整的 BGP 路由表；之後只傳送**增量更新** (incremental updates)。
+    * **Keepalive 與 Hold Time**：在沒有路由更新時，BGP 對等體會交換 Keepalive 訊息以維持會話活躍。
+      * **Hold Time** 是接收連續 BGP 更新或 Keepalive 訊息之間允許經過的最大時間限制。在 Cisco NX-OS 環境中，預設 Hold Timer 為 180 秒，Keepalive 間隔為 60 秒。
+    * **router id** 要在對等端之間建立 BGP 會話，BGP 必須具有路由器 ID，該 ID 會在建立 BGP 會話時通過 OPEN 消息發送給 BGP 對等端。
+      * 如果 BGP 沒有路由器 ID，它無法與任何 BGP 鄰居建立對等連線
+
+    > BGP session 是兩個 BGP 路由器之間建立的鄰接關係
+
+3. BGP 鄰居狀態機 (Finite-State Machine, FSM)
+
+    BGP 使用 FSM 來維護與所有 BGP 對等體的操作狀態。一個典型的 BGP 會話會經歷以下幾個關鍵狀態：
+
+    1. **Idle**：初始狀態，嘗試啟動 TCP 連線。
+    2. **Connect/Active**：嘗試建立 TCP 連線。
+    3. **OpenSent/OpenConfirm**：交換 OPEN 訊息並協商能力，例如 BGP 版本、AS 編號和保持時間。
+    4. **Established**：BGP 會話完全建立，開始透過 **UPDATE 訊息**交換路由資訊。
+
+
+## 總結
+
+BGP 是一種**路徑向量路由演算法** (path-vector routing algorithm)，主要用於在不同的自治系統 (Autonomous Systems, AS) 之間交換路由資訊，其設計目標是確定到達特定目的地的最佳路徑，同時確保網路中不會出現路由迴圈。不像鏈路狀態路由協議那樣包含網路的完整拓撲。BGP 中 AS_Path 用作迴路防止機制。
+
+
+
+|特性|BGP Numbered|BGP Unnumbered|
+|---|---|---|
+|接口 IP 分配|每個互聯接口都需要 IPv4 地址|接口不需要 IPv4 地址（僅需 Loopback）|
+|鄰居定義方式|指定鄰居的 IP 地址|指定接口名稱 (如 swp1)|
+|擴展性|規模越大，IP 地址管理越痛苦|極佳，適合大規模數據中心 (Clos 拓撲)|
+|地址族支持|IPv4 或 IPv6|可在 IPv6 承載上交換 IPv4/IPv6 路由|
+|主要協議基礎|標準 BGP|IPv6 Link-Local + RFC 5549/8950|
+
+> 如果需要連接外部防火牆、舊款交換機或服務商，考慮使用 BGP Numbered，因為這些第三方設備往往不支持透過 IPv6 Link-Local 來交換 IPv4 路由。
