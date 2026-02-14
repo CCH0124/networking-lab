@@ -86,6 +86,10 @@ BGP 是網際網路的路由協定，它透過交換路由資訊和可達性資�
 
 ## Lab
 
+下圖為本實驗的拓樸。
+
+![](topo.png)
+
 ### BGP Numbered Lab
 
 1. 分配自治系統編號 (ASN)：必須為該 BGP 節點分配一個 ASN。在兩層式的 Leaf-and-Spine 架構中，可以利用 auto BGP 功能讓 Cumulus Linux 自動分配 ASN。
