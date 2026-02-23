@@ -1,22 +1,47 @@
 # 基本指南
 
-實驗 cumulus OS 版本為 5.4
+實驗 cumulus OS 版本為 5.12
 
 ## 常用指令
 
-```bash
-nv config patch nvue.yaml
-# 將檔案內容合併到現有設定中（推薦）
-```
+下表格詳細列出了 NVIDIA **NVUE (Network Virtualization User Experience)** 的配置管理指令，主要用於 NVIDIA Cumulus Linux 交換機。NVUE 的核心邏輯是將配置分為「待定 (Pending)」與「已套用 (Applied)」，類似 Git 的提交機制。
 
-確認變更
+以下為表格內容的中文翻譯與各指令的使用說明：
 
-```bash
-nv config diff
-```
+| 指令 | 翻譯與功能說明 |
+| --- | --- |
+| **`nv config apply`** | **套用配置**：將待定配置或特定版本儲存至啟動配置 (Startup-config)。 |
+| **`nv config detach`** | **分離配置**：將目前的待定配置分離出來，並分配一個整數 ID 以便獨立編輯。 |
+| **`nv config diff`** | **查看差異**：顯示不同版本之間、待定與已套用配置之間，或分離配置間的差異。 |
+| **`nv config find`** | **搜尋配置**：在已套用的配置中根據關鍵字搜尋特定部分。 |
+| **`nv config history`** | **操作歷史**：查看交換機配置變更的紀錄（包含 ID、時間、使用者及變更來源）。 |
+| **`nv config patch`** | **增補配置**：使用指定的 YAML 檔案來「更新（增量修改）」待定配置。 |
+| **`nv config replace`** | **替換配置**：使用指定的 YAML 檔案來「完全覆蓋（取代）」待定配置。 |
+| **`nv config revision`** | **版本列表**：列出交換機上目前儲存的所有配置版本。 |
+| **`nv config save`** | **儲存配置**：手動將已套用的配置寫入 `/etc/nvu.d/startup.yaml` 以確保重啟後生效。 |
+| **`nv config show`** | **顯示配置**：以 **YAML 格式** 顯示目前已套用的配置。 |
+| **`nv config show -o commands`** | **顯示指令**：將目前已套用的配置以 **CLI 指令格式**（nv set...）顯示。 |
+| **`nv config diff -o commands`** | **顯示指令差異**：以 **CLI 指令格式** 顯示兩個配置版本間的差異。 |
 
-正式套用
+1. 如何使用這些指令
 
-```bash
-nv config apply
-```
+在 NVUE 中，典型的操作流程是：**修改 (Set) -> 比對 (Diff) -> 套用 (Apply)**。
+
+  * 安全套用配置 (`apply`)
+    * 這是最重要的指令。為了防止配置錯誤導致斷網，建議使用 **確認機制**：
+      * `nv config apply --confirm 10m`：套用配置後，你必須在 10 分鐘內確認，否則系統會自動回滾 (Rollback) 到變更前的狀態。
+      * `nv config apply --assume-yes`：如果你很確定，可以使用此參數跳過所有確認提示。
+
+  * 檔案管理 (`patch` vs `replace`)
+
+    * 如果你只想修改一個介面參數，請用 `patch`。
+    * 如果你想讓整台交換機的狀態與你的檔案一模一樣（刪除檔案中未提到的所有配置），請用 `replace`。
+
+  * 搜尋與排錯 (`find` & `diff`)
+    * **搜尋**：例如 `nv config find swp1` 會直接顯示所有關於第一號物理接口的配置。
+    * **比對**：在輸入 `apply` 之前，強烈建議先執行 `nv config diff` 看看自己到底改了什麼，避免誤刪配置。
+
+  * 格式切換 (`-o commands`)
+    * NVUE 預設輸出是 YAML（適合機器讀取或自動化），但對於人類維運來說，`nv config show -o commands` 產生的 `nv set ...` 指令格式更直觀，方便複製到其他設備執行。
+  * 持久化 (`save`)
+    * 如果你的系統設定 `auto save` 為關閉狀態，請務必在 `apply` 之後執行 `nv config save`，否則交換機重啟後會回到舊的設定。
