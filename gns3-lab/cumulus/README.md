@@ -2,6 +2,15 @@
 
 實驗 cumulus OS 版本為 5.12
 
+## 預設啟動檔案 (Default Startup File)
+
+NVUE 提供了一個預設的 `/etc/nvue.d/startup.yaml` 檔案，這相當於設備的出廠設定。如以下
+
+* hostname：預設為 cumulus
+* 防火牆規則
+* 使用者：包含預設的 cumulus 帳號資訊
+* API 服務：預設會啟用 NVUE API。
+
 ## 常用指令
 
 下表格詳細列出了 NVIDIA **NVUE (Network Virtualization User Experience)** 的配置管理指令，主要用於 NVIDIA Cumulus Linux 交換機。NVUE 的核心邏輯是將配置分為「待定 (Pending)」與「已套用 (Applied)」，類似 Git 的提交機制。
@@ -45,3 +54,16 @@
     * NVUE 預設輸出是 YAML（適合機器讀取或自動化），但對於人類維運來說，`nv config show -o commands` 產生的 `nv set ...` 指令格式更直觀，方便複製到其他設備執行。
   * 持久化 (`save`)
     * 如果你的系統設定 `auto save` 為關閉狀態，請務必在 `apply` 之後執行 `nv config save`，否則交換機重啟後會回到舊的設定。
+
+
+當執行 `nv config apply` 時，NVUE 會自動將設定同步寫入到底層 Linux 檔案，例如 `/etc/network/interfaces` 和 `/etc/frr/frr.conf`。也不要手動修改上述的底層 Linux 檔案。若有自動化需求（如使用 Ansible），需參考[忽略 Linux 檔案](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/System-Configuration/NVIDIA-User-Experience-NVUE/NVUE-CLI/#configure-nvue-to-ignore-linux-files)的相關設定。
+
+需要特別注意
+
+1. 不要隨意 Replace，除非 YAML 檔案包含了完整的預設帳戶資訊，否則請用 `patch` 代替 `replace`，避免把 cumulus 帳號洗掉。
+2. 不要手動改底層，一旦開始使用 NVUE，就放棄手動修改 /etc/network/interfaces 的習慣，避免配置衝突。
+3. 確保 nvue-startup.service 已啟用，否則重啟後的配置將會失效。
+
+## 參考資源
+
+[nvidia | NVUE CLI 5.12](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/System-Configuration/NVIDIA-User-Experience-NVUE/NVUE-CLI/#)
