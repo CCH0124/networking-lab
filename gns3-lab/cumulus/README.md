@@ -64,6 +64,28 @@ NVUE 提供了一個預設的 `/etc/nvue.d/startup.yaml` 檔案，這相當於�
 2. 不要手動改底層，一旦開始使用 NVUE，就放棄手動修改 /etc/network/interfaces 的習慣，避免配置衝突。
 3. 確保 nvue-startup.service 已啟用，否則重啟後的配置將會失效。
 
+### 範例
+
+正常流程
+
+|階段|API 動作| NVUE 指令|
+|---|---|---|
+|Stage 1: 預備|生成 YAML 設定|自動化邏輯|
+|Stage 2: 注入|將變更寫入 Pending|`nv config patch`|
+|Stage 3: 稽核|回傳差異給管理 UI|`nv config diff`|
+|Stage 4: 套用|帶回滾機制的套用|`nv config apply --confirm`|
+|Stage 5: 結束|持久化並紀錄歷史|`nv config save & history`|
+
+錯誤流程
+
+|階段| API 動作 |NVUE 指令與邏輯|目的|
+|---|---|---|---|
+|Stage 1. 請求接收|管理者提交 YAML|(Python API 接收資料)|啟動配置事務。|
+|Stage 2. 預備注入|執行配置補丁|`nv config patch <file.yaml>`|將變更併入待定緩衝區。|
+|Stage 3. 失敗偵測|檢查指令回傳|判斷 HTTP Return Code|偵測語法或邏輯錯誤。|
+|Stage 4. 隔離清理|執行分離 (核心)|`nv config detach`|清空待定緩衝區|將錯誤配置丟入沙盒。|
+|Stage 5. 錯誤回報|回傳失敗訊息|(傳回 stderr 錯誤內容)|讓管理者知道出錯位置並保持系統乾淨。|
+
 ## 參考資源
 
 [nvidia | NVUE CLI 5.12](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/System-Configuration/NVIDIA-User-Experience-NVUE/NVUE-CLI/#)
