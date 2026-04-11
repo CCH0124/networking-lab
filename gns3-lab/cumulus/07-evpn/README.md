@@ -77,6 +77,12 @@
 | **Type 10** | S-PMSI Auto Discovery | Auto-Discovery routes used to announce the tunnels that instantiate a Selective PMSI - to some of the PEs in the same VPN. |
 | **Type 11** | Leaf Auto Discovery | Used for explicit leaf tracking purposes. Triggered by I/S-PMSI A-D routes and targeted at triggering route’s (re-)advertiser. |
 
+Type 2、3、5 屬於 Route 或 VNI 資訊
+
+Type 1、4 對同時連結多個網路的支援
+
+Type 4、6 群播資訊
+
 ## VTEP (Virtual Tunnel Endpoints)
 
 VTEP 是 VXLAN 網路上的邊緣設備。它既可以是 VXLAN 隧道的起點（在此處封裝使用者資料訊框），也可以是 VXLAN 隧道的終點（在此處解封裝資料訊框）。
@@ -172,9 +178,15 @@ EVPN 與 VXLAN 的 Active-active 模式:
 
 實驗架構圖如下
 
-![](EVPN_VRR_VXLAN-ACTIVE-ACTIVE.png)
+![LAB 架構](EVPN_VRR_VXLAN-ACTIVE-ACTIVE.png)
 
 針對上述詳細配置內容可跳至[leaf01 配置](#leaf01)
+
+參考資源如下:
+
+* [nvidia | EVPN](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/Network-Virtualization/Ethernet-Virtual-Private-Network-EVPN/Basic-Configuration/)
+* [nvidia | VRR](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/Layer-2/Virtual-Router-Redundancy-VRR/)
+* [nvidia | VXLAN-Active-Active](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/Network-Virtualization/VXLAN-Active-Active-Mode/)
 
 ### Border
 
@@ -940,117 +952,117 @@ EVPN 與 VXLAN 的 Active-active 模式:
 
 我們實驗類似於此圖配置，可參考此架構。
 
-![](https://docs.nvidia.com/networking-ethernet-software/images/cumulus-linux/mlag-config.png)
+![MLAG From Nvidia](https://docs.nvidia.com/networking-ethernet-software/images/cumulus-linux/mlag-config.png)
 
 在實驗中，兩台 Leaf 交換器 (leaf01, leaf02) 透過 peer link 互連。一台伺服器 (server01) 透過 bond (鏈路聚合) 同時連接到 leaf01 和 leaf02。這兩台 Leaf 交換器在邏輯上被伺服器視為單一交換器。
 
 1. 定義 MLAG 與 Bonding。將所有從雙連線設備（Dual-connected device）連接至 MLAG 配對（MLAG pair）的介面都納入 Bond 中，即使該 Bond 在單台實體交換器上僅包含一條鏈路。
 
-```yaml
-      bond1:
-        bond:
-          member: # 將介面納入 Bond
-            swp5: {}
-          mlag:
-            id: 1
-          lacp-bypass: on
-        link:
-          mtu: 9000
-        bridge:
-          domain:
-            br_default:
-              access: 10
-```
+    ```yaml
+          bond1:
+            bond:
+              member: # 將介面納入 Bond
+                swp5: {}
+              mlag:
+                id: 1
+              lacp-bypass: on
+            link:
+              mtu: 9000
+            bridge:
+              domain:
+                br_default:
+                  access: 10
+    ```
 
 2. 每個 MLAG 定義唯一的 MLAG ID。
 
-```yaml
-      bond1:
-        bond:
-          member:
-            swp5: {}
-          mlag:
-            id: 1 # MLAG ID
-          lacp-bypass: on
-        link:
-          mtu: 9000
-        bridge:
-          domain:
-            br_default:
-              access: 10
-```
+    ```yaml
+          bond1:
+            bond:
+              member:
+                swp5: {}
+              mlag:
+                id: 1 # MLAG ID
+              lacp-bypass: on
+            link:
+              mtu: 9000
+            bridge:
+              domain:
+                br_default:
+                  access: 10
+    ```
 
 3. 將建立的 Bond 加入橋接器 (Bridge)
 
-必須將 MLAG Bond 上配置的所有 VLAN 都加入到橋接器中。這樣一來，當 MLAG Bond 失效時，連接到下方設備的流量才能透過對等鏈路（Peerlink）進行重新定向。
+    必須將 MLAG Bond 上配置的所有 VLAN 都加入到橋接器中。這樣一來，當 MLAG Bond 失效時，連接到下方設備的流量才能透過對等鏈路（Peerlink）進行重新定向。
 
-```yaml
-      bond1:
-        bond:
-          member:
-            swp5: {}
-          mlag:
-            id: 1
-          lacp-bypass: on
-        link:
-          mtu: 9000
-        bridge: # 將實驗中定義的 VLAN 10 加至橋接器
-          domain:
-            br_default:
-              access: 10
-```
+    ```yaml
+          bond1:
+            bond:
+              member:
+                swp5: {}
+              mlag:
+                id: 1
+              lacp-bypass: on
+            link:
+              mtu: 9000
+            bridge: # 將實驗中定義的 VLAN 10 加至橋接器
+              domain:
+                br_default:
+                  access: 10
+    ```
 
 4. 建立 inter-chassis bond  與對等鏈路 VLAN
 
-建立 inter-chassis bond  以及對等鏈路 VLAN（作為 VLAN 子介面），並提供對等鏈路 IP 地址、MLAG Bond 介面、MLAG 系統 MAC 地址以及備援介面（Backup interface）。
+    建立 inter-chassis bond  以及對等鏈路 VLAN（作為 VLAN 子介面），並提供對等鏈路 IP 地址、MLAG Bond 介面、MLAG 系統 MAC 地址以及備援介面（Backup interface）。
 
-```yaml
-...
-      peerlink: # inter-chassis bond，預設是 peerlink，將對等連結 VLAN 設定為名為 peerlink.4094。使用 peerlink.4094 可確保 VLAN 獨立於橋接器和生成樹轉送決策。
-        bond:
-          member:
-            swp10-11: {}
-  ...
-    mlag:
-      backup: # 定義備援位置
-        10.10.10.2: {}
-      peer-ip: linklocal
-      priority: 1000
-      init-delay: 10
+    ```yaml
+    ...
+          peerlink: # inter-chassis bond，預設是 peerlink，將對等連結 VLAN 設定為名為 peerlink.4094。使用 peerlink.4094 可確保 VLAN 獨立於橋接器和生成樹轉送決策。
+            bond:
+              member:
+                swp10-11: {}
+      ...
+        mlag:
+          backup: # 定義備援位置
+            10.10.10.2: {}
+          peer-ip: linklocal
+          priority: 1000
+          init-delay: 10
 
-```
+    ```
 
 5. 定義  VLAN 10 的介面與 IP 與定義 VRR
 
-```yaml
-...
-      vlan10:
-        type: svi
-        vlan: 10
-        ip:
-          vrf: RED
-          address:
-            10.1.10.2/24: {}
-          vrr:
-            state:
-              up: {}
-            address:
-              10.1.10.1/24: {}
-```
+    ```yaml
+    ...
+          vlan10:
+            type: svi
+            vlan: 10
+            ip:
+              vrf: RED
+              address:
+                10.1.10.2/24: {}
+              vrr:
+                state:
+                  up: {}
+                address:
+                  10.1.10.1/24: {}
+    ```
 
 6. VRR MAC Address(本實驗沒有特別配置)
 
-Cumulus Linux 設定了一個全網架構範圍（Fabric-wide）的 MAC 地址，以確保各個 VRR 交換器之間的一致性，這在 EVPN 多網架構環境中特別有用。實驗如下配置來全域更改 VRR MAC 地址，也可以針對特定的 VLAN 覆蓋（Override）全域設定。
+    Cumulus Linux 設定了一個全網架構範圍（Fabric-wide）的 MAC 地址，以確保各個 VRR 交換器之間的一致性，這在 EVPN 多網架構環境中特別有用。實驗如下配置來全域更改 VRR MAC 地址，也可以針對特定的 VLAN 覆蓋（Override）全域設定。
 
-設定範圍是 `00:00:5E:00:01:00` 到 `00:00:5E:00:01:FF` 之間的保留範圍內，避免衝突。指令: `nv set system global fabric-mac 00:00:5E:00:01:FF`。預設為 `00:00:5e:00:01:01`
+    設定範圍是 `00:00:5E:00:01:00` 到 `00:00:5E:00:01:FF` 之間的保留範圍內，避免衝突。指令: `nv set system global fabric-mac 00:00:5E:00:01:FF`。預設為 `00:00:5e:00:01:01`
 
 7. Server 端配置 LACP
 
-每台伺服器必須具備兩個網路介面。交換器端將這些介面配置為執行 LACP 的 Bond（鏈路聚合），伺服器端也必須同步將這兩個介面配置為 Teaming、連接埠聚合 (Port Aggregation)、連接埠群組 (Port Group) 或執行 LACP 的 EtherChannel。
+    每台伺服器必須具備兩個網路介面。交換器端將這些介面配置為執行 LACP 的 Bond（鏈路聚合），伺服器端也必須同步將這兩個介面配置為 Teaming、連接埠聚合 (Port Aggregation)、連接埠群組 (Port Group) 或執行 LACP 的 EtherChannel。
 
-伺服器可以透過靜態 (Static) 或 DHCP 方式進行配置，其*預設閘道 (Gateway) 必須設定為虛擬路由器 (Virtual Router) 的 IP 地址*。此預設閘道地址固定不變。此外，伺服器與交換器之間的鏈路應配置為 Active-Active（主動-主動） 模式，以支援 FHRP（第一跳備援協定）。
+    伺服器可以透過靜態 (Static) 或 DHCP 方式進行配置，其*預設閘道 (Gateway) 必須設定為虛擬路由器 (Virtual Router) 的 IP 地址*。此預設閘道地址固定不變。此外，伺服器與交換器之間的鏈路應配置為 Active-Active（主動-主動） 模式，以支援 FHRP（第一跳備援協定）。
 
-[](#server01) 為配置內容。
+    [](#server01) 為配置內容。
 
 ##### VXLAN Active-Active
 
@@ -1060,20 +1072,20 @@ Cumulus Linux 設定了一個全網架構範圍（Fabric-wide）的 MAC 地址�
 
 1. anycast IP 配置
 
-```yaml
+    ```yaml
 
-    nve:
-      vxlan:
-        enable: on
-        mlag:
-          shared-address: 10.0.1.12 # anycast IP
-        source:
-          address: 10.10.10.1
-        arp-nd-suppress: on
+        nve:
+          vxlan:
+            enable: on
+            mlag:
+              shared-address: 10.0.1.12 # anycast IP
+            source:
+              address: 10.10.10.1
+            arp-nd-suppress: on
 
-```
+    ```
 
-原則上要點是 anycast IP。
+    原則上要點是 anycast IP。
 
 #### leaf02
 
@@ -1270,7 +1282,6 @@ Cumulus Linux 設定了一個全網架構範圍（Fabric-wide）的 MAC 地址�
 ```
 
 #### leaf03
-
 
 ```yaml
 - set:
