@@ -30,6 +30,8 @@ EVPN Multihoming (EVPN-MH) 是現代資料中心 Clos 拓撲架構中，用來�
 
 ![EVPN Multihoming (EVPN-MH)](EVPN%20Multihoming.png)
 
+* [nvidia | EVPN-Multihoming](https://docs.nvidia.com/networking-ethernet-software/cumulus-linux-512/Network-Virtualization/Ethernet-Virtual-Private-Network-EVPN/EVPN-Multihoming/)
+
 ### Spine
 
 Spine 在 EVPN 實驗架構中扮演負責讓所有 Leaf 之間能夠交換路由資訊。核心配置
